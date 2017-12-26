@@ -7,7 +7,7 @@
  */
 #include <SoftwareSerial.h>
 #ifndef CONFIG
-#include "config.h"
+  #include "config.h"
 #endif
 
 // 藍牙設定
@@ -20,6 +20,10 @@ void setup() {
   // 腳位設定  
   pinMode (WHEEL_LEFT, OUTPUT);
   pinMode (WHEEL_RIGHT, OUTPUT);
+  pinMode(RELAY_PIN, OUTPUT);
+
+  // 伺服馬達
+  Xladder.attach(SERVO_PIN);
 
   //藍牙設定
   BT.begin(9600);
@@ -31,6 +35,8 @@ void loop() {
   Serial.println ("keyin t for test mode");
   while (1) {
     char init = Serial.read();
+//  預設直接進入藍牙模式
+//    char init = 'b';
     // 藍芽模式
     if (init == 'b') {
       mode = 1;
@@ -45,30 +51,41 @@ void loop() {
   }
 
   // 藍芽模式
-  if (mode) {
+  if (mode == 1) {
     Serial.println ("藍芽模式");
     while (1) {
       if (BT.available()) {
         Serial.print("get cmd: ");
         char var = BT.read();
         // 停機指令
-        if (var == 'e') break;
+        if (var == 'i') {
+          mode = -1;
+          break;
+        }
         switch (var) {
           // 前進
-          case 'w':
+          case 'c':
             go_straight(1);
             break;
           // 後退
-          case 's':
+          case 'e':
             go_straight(0);
             break;
           // 右轉
-          case 'd':
+          case 'f':
             turn(1);
             break;
           // 左轉
-          case 'a':
+          case 'd':
             turn(0);
+            break;
+          // 打開 or 關閉 繼電器
+          case 'a':
+            switchRelay();
+            break;
+          // 起降伺服馬達
+          case 'b':
+            switchLadder();
             break;
           default:
             Serial.print ("不支援的指令：" );
@@ -78,8 +95,8 @@ void loop() {
     }
   }
   // 測試模式
-  else {
-    Serial.println ("測試模式");
+  else if (mode == 0){
+    Serial.println ("測試模式: ");
     Serial.println ("前進");
     go_straight(1);
     Serial.println ("後退");
@@ -88,10 +105,14 @@ void loop() {
     turn(1);
     Serial.println ("右轉");
     turn(0);
+    mode = -1;
+    switchRelay ();
+    switchLadder ();
     Serial.println ("結束模式");
     Serial.println ("-------------------");
     Serial.println ();
   }
+  else ;
 }
 
 /*
@@ -134,4 +155,25 @@ void turn (int is_right) {
   analogWrite (LEFT_PWM, 0);
   analogWrite (RIGHT_PWM, 0);
 }
+
+// 繼電器開關
+void switchRelay () {
+  if (relayState == 0) relayState = 1;
+  else relayState = 0;
+
+  digitalWrite(RELAY_PIN, relayState);
+  Serial.print("繼電器：");
+  Serial.println(relayState);
+}
+
+// 伺服馬達開關
+void switchLadder () {
+  if (servoState == 0) servoState = 1;
+  else servoState = 0;
+
+  Xladder.write(servoState * SERVO_MAG);
+  Serial.print("伺服馬達：");
+  Serial.println(servoState);
+}
+
 
