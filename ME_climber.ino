@@ -34,9 +34,9 @@ void loop() {
   Serial.println ("keyin b for blueteeth mode");
   Serial.println ("keyin t for test mode");
   while (1) {
-    char init = Serial.read();
+//    char init = Serial.read();
 //  預設直接進入藍牙模式
-//    char init = 'b';
+    char init = 'b';
     // 藍芽模式
     if (init == 'b') {
       mode = 1;
