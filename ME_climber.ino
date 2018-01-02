@@ -21,9 +21,13 @@ void setup() {
   pinMode (WHEEL_LEFT, OUTPUT);
   pinMode (WHEEL_RIGHT, OUTPUT);
   pinMode(RELAY_PIN, OUTPUT);
+  Serial.println(WHEEL_RIGHT);
 
   // 伺服馬達
-  Xladder.attach(SERVO_PIN);
+  Boom.attach(SERVO_PIN_DOWN);
+  Boom.write(servo_pos_down);
+  Arm.attach(SERVO_PIN_UP);
+  Arm.write(servo_pos_up);
 
   //藍牙設定
   BT.begin(9600);
@@ -58,7 +62,7 @@ void loop() {
         Serial.print("get cmd: ");
         char var = BT.read();
         // 停機指令
-        if (var == 'i') {
+        if (var == 'p') {
           mode = -1;
           break;
         }
@@ -72,20 +76,31 @@ void loop() {
             go_straight(0);
             break;
           // 右轉
-          case 'f':
+          case 'd':
             turn(1);
             break;
           // 左轉
-          case 'd':
+          case 'f':
             turn(0);
             break;
           // 打開 or 關閉 繼電器
-          case 'a':
+          case 'o':
             switchRelay();
             break;
           // 起降伺服馬達
-          case 'b':
-            switchLadder();
+          case 'g':
+            // 起大手
+            ctrlBoom (-15);
+            break;
+          case 'i':
+            ctrlBoom (15);
+            break;
+          case 'h':
+            // 起小手
+            ctrlArm (5);
+            break;
+          case 'j':
+            ctrlArm (-5);
             break;
           default:
             Serial.print ("不支援的指令：" );
@@ -107,7 +122,22 @@ void loop() {
     turn(0);
     mode = -1;
     switchRelay ();
-    switchLadder ();
+    for (int i = 0; i < 8; i++) {
+      ctrlBoom (-20);
+      delay(500);
+    }
+    for (int i = 0; i < 8; i++) {
+      ctrlArm (5);
+      delay(500);
+    }
+    for (int i = 0; i < 8; i++) {
+      ctrlBoom (20);
+      delay(500);
+    }
+    for (int i = 0; i < 8; i++) {
+      ctrlArm (-5);
+      delay(500);
+    }
     Serial.println ("結束模式");
     Serial.println ("-------------------");
     Serial.println ();
@@ -121,7 +151,8 @@ void loop() {
 void go_straight (int is_ahead) {
   Serial.print ("Motor go ... power: " );
   Serial.println (GO_POWER);
-  
+  Serial.println (RIGHT_PWM);
+
   analogWrite (LEFT_PWM, GO_POWER);
   analogWrite (RIGHT_PWM, GO_POWER);
   if (is_ahead) {
@@ -158,22 +189,42 @@ void turn (int is_right) {
 
 // 繼電器開關
 void switchRelay () {
-  if (relayState == 0) relayState = 1;
-  else relayState = 0;
+  if (relayState == 0) {
+    relayState = 1;
+    digitalWrite(RELAY_PIN, HIGH);
+  }
+  else {
+    relayState = 0;
+    digitalWrite(RELAY_PIN, LOW);
+  }
 
-  digitalWrite(RELAY_PIN, relayState);
   Serial.print("繼電器：");
   Serial.println(relayState);
 }
 
-// 伺服馬達開關
-void switchLadder () {
-  if (servoState == 0) servoState = 1;
-  else servoState = 0;
-
-  Xladder.write(servoState * SERVO_MAG);
-  Serial.print("伺服馬達：");
-  Serial.println(servoState);
+// 伺服馬達角度加減
+void ctrlBoom (int ctrl) {
+  if (servo_pos_down + ctrl <= 180) {
+    servo_pos_down += ctrl;
+    Boom.write(servo_pos_down);
+    Serial.print("伺服馬達 大臂：");
+    Serial.println(servo_pos_down);
+  }
+  else {
+    Serial.println("到達底線，不能夠再寫入馬達");
+  }
 }
+void ctrlArm (int ctrl) {
+  if (servo_pos_up + ctrl >= 0 && servo_pos_up + ctrl <= 50) {
+    servo_pos_up += ctrl;
+    Arm.write(servo_pos_up);
+    Serial.print("伺服馬達 小臂：");
+    Serial.println(servo_pos_up);
+  }
+  else {
+    Serial.println("超過限制，不能夠再寫入馬達");
+  }
+}
+
 
 

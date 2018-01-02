@@ -2,13 +2,13 @@
 #define LEFT_PWM 6
 #define WHEEL_LEFT 7
 #define WHEEL_RIGHT 8
-#define RIGHT_PWM 9
+#define RIGHT_PWM 5
 #define BULETOOTH_RT 0
 #define BULETOOTH_TX 1
 
 // 行走參數
-#define GO_POWER 192
-#define DELAY 500
+#define GO_POWER 128
+#define DELAY 200
 // 旋轉時兩輪的速差
 #define TURN_HIGH 64
 #define TURN_LOW 0
@@ -19,9 +19,12 @@ int relayState = 0;
 
 // 伺服馬達
 #include <Servo.h>
-Servo Xladder;
-#define SERVO_PIN 10
-#define SERVO_MAG 100
+Servo Arm;
+Servo Boom;
+#define SERVO_PIN_UP 10   // 小臂
+#define SERVO_PIN_DOWN 11 // 大臂
+int servo_pos_up = 0;
+int servo_pos_down = 180;
 int servoState = 0;
 
 // 系統參數
