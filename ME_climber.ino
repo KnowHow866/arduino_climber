@@ -215,7 +215,7 @@ void ctrlBoom (int ctrl) {
   }
 }
 void ctrlArm (int ctrl) {
-  if (servo_pos_up + ctrl >= 0 && servo_pos_up + ctrl <= 50) {
+  if (servo_pos_up + ctrl >= 0 && servo_pos_up + ctrl <= 70) {
     servo_pos_up += ctrl;
     Arm.write(servo_pos_up);
     Serial.print("伺服馬達 小臂：");
